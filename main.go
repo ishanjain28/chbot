@@ -25,9 +25,11 @@ func main() {
 
 	fmt.Println("Connected to DB")
 
-	go bot.Start(db)
+	go func() {
+		log.Fatalln(http.ListenAndServe(":"+PORT, nil))
+	}()
 
-	log.Fatalln(http.ListenAndServe(":"+PORT, nil))
+	bot.Start(db)
 
 	// // sem := make(chan int, 10)
 	// result := make(chan string)
