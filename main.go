@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 
 	"github.com/ishanjain28/chbot/bot"
@@ -24,7 +25,9 @@ func main() {
 
 	fmt.Println("Connected to DB")
 
-	bot.Start(db)
+	go bot.Start(db)
+
+	log.Fatalln(http.ListenAndServe(":"+PORT, nil))
 
 	// // sem := make(chan int, 10)
 	// result := make(chan string)
