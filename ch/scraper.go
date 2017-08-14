@@ -2,11 +2,10 @@ package ch
 
 import (
 	"fmt"
-	"io"
 	"log"
 	"net/http"
-	"os"
 	"path"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -19,56 +18,46 @@ func Scrap(id int, sem chan int, result chan string, wg *sync.WaitGroup) {
 	defer wg.Done()
 	sem <- 1
 
-	tmp, err := worker("http://explosm.net/comics/random")
+	tmp, err := worker("http://explosm.net/comics/" + strconv.Itoa(id))
 	<-sem
 	if err != nil {
-		// log.Printf("error: %v", err)
-		return
+		log.Printf("error: %v", err)
 	}
 
 	fmt.Println(tmp)
+}
 
-	err = Download(tmp)
-	if err != nil {
-		log.Printf("error occurred in saving file: %v", err)
-	}
-
+// Random fetches link to a random Comic
+func Random() (string, error) {
+	return worker("http://explosm.net/comics/random")
 }
 
 // Download  a file
-func Download(url string) error {
+func Download(url string) (string, *http.Response, error) {
 	resp, err := http.Get(url)
 	if err != nil {
-		return err
+		return "", nil, err
 	}
 
 	if resp.StatusCode == http.StatusNotFound {
-		return fmt.Errorf("%d %s", resp.StatusCode, http.StatusText(resp.StatusCode))
+		return "", nil, fmt.Errorf("%d %s", resp.StatusCode, http.StatusText(resp.StatusCode))
 	}
 
 	fileName := strings.Split(path.Base(url), "?")[0]
 
-	file, err := os.Create(os.TempDir() + "\\ch\\" + fileName)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	io.Copy(file, resp.Body)
-
-	return nil
+	return fileName, resp, nil
 }
 
-func worker(url string) (string, error) {
+func worker(u string) (string, error) {
 
 	// fmt.Printf("processing, http://explosm.net/comics/%d\n", id)
 
-	req, _ := http.NewRequest("GET", url, nil)
+	req, _ := http.NewRequest("GET", u, nil)
 
 	client := &http.Client{}
 
 	req.Header.Set("Host", "files.explosm.net")
-	req.Header.Set("Referer", url)
+	req.Header.Set("Referer", u)
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.90 Safari/537.36")
 
 	resp, err := client.Do(req)
@@ -77,7 +66,6 @@ func worker(url string) (string, error) {
 	}
 
 	defer resp.Body.Close()
-
 	if resp.StatusCode == http.StatusNotFound {
 		return "", fmt.Errorf("%d %s", resp.StatusCode, http.StatusText(resp.StatusCode))
 	}
@@ -113,7 +101,6 @@ func worker(url string) (string, error) {
 	}
 
 	return comicLink, nil
-
 }
 
 func findComic(n *html.Node) string {

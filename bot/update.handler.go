@@ -1,10 +1,11 @@
 package bot
 
 import (
-	"fmt"
+	"io/ioutil"
 	"log"
 	"strings"
-	"time"
+
+	"github.com/ishanjain28/chbot/ch"
 
 	"gopkg.in/mgo.v2"
 
@@ -30,12 +31,21 @@ func handleCommands(bot *tbot.BotAPI, d *db.DB, u tbot.Update) {
 	switch u.Message.Text {
 	case "/start":
 
-		fmt.Println(u.Message.Date, time.Now().Unix())
-		data, err := d.FetchSubscribers()
-		if err != nil {
-			log.Fatalln(err)
-		}
-		fmt.Println(data)
+		randomBtn := tbot.NewKeyboardButton("Random")
+
+		k := tbot.NewKeyboardButtonRow(randomBtn)
+
+		keyboard := tbot.NewReplyKeyboard(k)
+
+		msg := tbot.NewMessage(chatID, "This bot can send you the latest  Cyanide and Happiness Comics on a Daily Basic or you can read random C&H comics")
+		msg.ReplyMarkup = keyboard
+		bot.Send(msg)
+
+		// data, err := d.FetchSubscribers()
+		// if err != nil {
+		// 	log.Fatalln(err)
+		// }
+		// fmt.Println(data)
 	case "/subscribe":
 		user := &db.User{
 			ChatID:   chatID,
@@ -84,11 +94,45 @@ func handleCommands(bot *tbot.BotAPI, d *db.DB, u tbot.Update) {
 }
 
 func handleTextInput(bot *tbot.BotAPI, u tbot.Update) {
+
+	chatID := u.Message.Chat.ID
 	switch strings.ToLower(u.Message.Text) {
 	case "random":
+		// previous := "5"
+		// next := "10"
+
+		// rows := tbot.NewInlineKeyboardRow(
+		// 	tbot.InlineKeyboardButton{CallbackData: &previous, Text: "<<"},
+		// 	tbot.InlineKeyboardButton{CallbackData: &next, Text: ">>"})
+
+		// keyboard := tbot.NewInlineKeyboardMarkup(rows)
+
+		fileLink, err := ch.Random()
+		if err != nil {
+			sendErrorMessage(bot, chatID)
+			return
+		}
+
+		// fileURL, err := url.Parse(fileLink)
+		// if err != nil {
+		// 	sendErrorMessage(bot, chatID)
+		// 	return
+		// }
+
+		filename, resp, err := ch.Download(fileLink)
+		defer resp.Body.Close()
+		if err != nil {
+			sendErrorMessage(bot, chatID)
+			return
+		}
+
+		b, _ := ioutil.ReadAll(resp.Body)
+
+		msg := tbot.NewPhotoUpload(chatID, tbot.FileBytes{Bytes: b, Name: filename})
+		// msg.ReplyMarkup = keyboard
+		bot.Send(msg)
 
 	default:
-
 	}
 }
 

@@ -33,6 +33,10 @@ func Start(db *db.DB) {
 		log.Fatalln("error in starting bot: %v", err)
 	}
 
+	if GO_ENV != "production" {
+		bot.Debug = true
+	}
+
 	fmt.Printf("Authorized on account %s\n", bot.Self.UserName)
 
 	updates := fetchUpdates(bot)
