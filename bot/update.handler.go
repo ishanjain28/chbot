@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
 	"gopkg.in/mgo.v2"
 
@@ -28,6 +29,8 @@ func handleCommands(bot *tbot.BotAPI, d *db.DB, u tbot.Update) {
 
 	switch u.Message.Text {
 	case "/start":
+
+		fmt.Println(u.Message.Date, time.Now().Unix())
 		data, err := d.FetchSubscribers()
 		if err != nil {
 			log.Fatalln(err)
@@ -83,7 +86,7 @@ func handleCommands(bot *tbot.BotAPI, d *db.DB, u tbot.Update) {
 func handleTextInput(bot *tbot.BotAPI, u tbot.Update) {
 	switch strings.ToLower(u.Message.Text) {
 	case "random":
-		0
+
 	default:
 
 	}

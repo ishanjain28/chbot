@@ -1,4 +1,4 @@
-ṭ          package ch
+package ch
 
 import (
 	"fmt"

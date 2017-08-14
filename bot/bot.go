@@ -3,17 +3,23 @@ package bot
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 
 	tbot "github.com/go-telegram-bot-api/telegram-bot-api"
 	"github.com/ishanjain28/chbot/db"
 )
 
-// TOKEN telegram bot token
-var TOKEN = os.Getenv("TOKEN")
+var (
+	// TOKEN telegram bot token
+	TOKEN = os.Getenv("TOKEN")
 
-// GO_ENV is used to set environment of application, as it will work differently in different environements
-var GO_ENV = os.Getenv("GO_ENV")
+	// GO_ENV is used to set environment of application, as it will work differently in different environements
+	GO_ENV = os.Getenv("GO_ENV")
+
+	// HOST Address
+	HOST = os.Getenv("HOST")
+)
 
 // Start the bot
 func Start(db *db.DB) {
@@ -44,20 +50,37 @@ func fetchUpdates(bot *tbot.BotAPI) tbot.UpdatesChannel {
 	if GO_ENV == "production" {
 		// Use webhook if in production
 
-	} else {
-		// Use polling if not in production
+		// Remove any existing webhook
 		bot.RemoveWebhook()
 
-		u := tbot.NewUpdate(0)
-		u.Timeout = 60
-		updates, err := bot.GetUpdatesChan(u)
+		// Set a new webhook
+		_, err := bot.SetWebhook(tbot.NewWebhook(HOST + "/chbot/" + bot.Token))
 		if err != nil {
-			log.Printf("warn: error in fetching updates %v", err)
-
+			log.Fatalf("error in setting webhook: %v", err)
 		}
+
+		updates := bot.ListenForWebhook("/chbot/" + bot.Token)
+
+		//redirect users visiting "/" to bot's telegram page
+		http.HandleFunc("/", redirectToTelegram)
 
 		return updates
 	}
 
-	return nil
+	// Use polling if not in production
+	bot.RemoveWebhook()
+
+	u := tbot.NewUpdate(0)
+	u.Timeout = 60
+	updates, err := bot.GetUpdatesChan(u)
+	if err != nil {
+		log.Printf("warn: error in fetching updates %v", err)
+
+	}
+
+	return updates
+}
+
+func redirectToTelegram(w http.ResponseWriter, r *http.Request) {
+	http.Redirect(w, r, "https://t.me/cyanidesub_bot", http.StatusTemporaryRedirect)
 }
