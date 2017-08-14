@@ -1,3 +1,5 @@
 .vscode
 .idea
 chbot
+vendor/github.com/
+vendor/gopkg.in/
