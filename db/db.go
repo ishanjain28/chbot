@@ -41,7 +41,7 @@ func Init() (*DB, error) {
 func (d *DB) AddSubscriber(u *User) error {
 	s := d.Sess.Copy()
 
-	c := s.DB("ch").C("subs")
+	c := s.DB("heroku_t8qvq3w4").C("subs")
 
 	err := c.Insert(u)
 
@@ -56,7 +56,7 @@ func (d *DB) AddSubscriber(u *User) error {
 func (d *DB) RemoveSubscriber(u *User) error {
 	s := d.Sess.Copy()
 
-	c := s.DB("ch").C("subs")
+	c := s.DB("heroku_t8qvq3w4").C("subs")
 
 	err := c.Remove(u)
 	if err != nil {
@@ -68,7 +68,7 @@ func (d *DB) RemoveSubscriber(u *User) error {
 // FetchSubscribers returns a slice of all the subscribers in Databaase
 func (d *DB) FetchSubscribers() ([]User, error) {
 	s := d.Sess.Copy()
-	c := s.DB("ch").C("subs")
+	c := s.DB("heroku_t8qvq3w4").C("subs")
 
 	var results []User
 
